@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, Response
 import sqlite3
 
 app = Flask(__name__)
@@ -75,20 +75,22 @@ def enregistrer_client():
 
 @app.route('/fiche_nom/<nom_client>', methods=['GET'])
 def recherche_par_nom(nom_client):
-    # Si l'utilisateur n'est pas authentifié, redirige vers la page d'authentification
-    if not est_authentifie():
-        return redirect(url_for('authentification'))
+    # Vérifiez si les identifiants sont corrects
+    if request.authorization and request.authorization.username == 'user' and request.authorization.password == '12345':
+        # Connexion à la base de données
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
 
-    # Connexion à la base de données
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
+        # Exécution de la requête SQL pour rechercher le client par nom
+        cursor.execute('SELECT * FROM clients WHERE nom = ?', (nom_client,))
+        data = cursor.fetchall()
+        conn.close()
 
-    # Exécution de la requête SQL pour rechercher le client par nom
-    cursor.execute('SELECT * FROM clients WHERE nom = ?', (nom_client,))
-    data = cursor.fetchall()
-    conn.close()
+        # Rendre le template HTML et transmettre les données
+        return render_template('read_data.html', data=data)
+    else:
+        # Si les identifiants sont incorrects, renvoyer une demande d'authentification
+        return Response('Unauthorized', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
-    # Rendre le template HTML et transmettre les données
-    return render_template('read_data.html', data=data)
 if __name__ == "__main__":
     app.run(debug=True)
