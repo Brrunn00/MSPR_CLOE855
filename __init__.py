@@ -73,14 +73,11 @@ def enregistrer_client():
     conn.close()
     return redirect('/consultation/')  # Rediriger vers la page d'accueil après l'enregistrement
 
-@app.route('/fiche_nom/', methods=['GET'])
-def recherche_par_nom():
+@app.route('/fiche_nom/<nom_client>', methods=['GET'])
+def recherche_par_nom(nom_client):
     # Si l'utilisateur n'est pas authentifié, redirige vers la page d'authentification
     if not est_authentifie():
         return redirect(url_for('authentification'))
-
-    # Récupère le nom du client depuis la requête
-    nom_client = request.args.get('nom_client')
 
     # Connexion à la base de données
     conn = sqlite3.connect('database.db')
@@ -93,6 +90,5 @@ def recherche_par_nom():
 
     # Rendre le template HTML et transmettre les données
     return render_template('read_data.html', data=data)
-
 if __name__ == "__main__":
     app.run(debug=True)
